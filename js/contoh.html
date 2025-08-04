@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pembayaran Listrik</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #ffffff;
+    }
+
+    .footer {
+      background-color: #000000;
+      color: #ffffff;
+      padding: 10px;
+      margin-top: 30px;
+    }
+
+    .table-light-gray tbody td {
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="container">
+    <h1 class="mt-4 mb-4">Pembayaran Listrik</h1>
+
+    <form @submit.prevent="calculateBill">
+      <div class="mb-3">
+        <label for="namaPelanggan" class="form-label">Nama Pelanggan:</label>
+        <input type="text" class="form-control" id="namaPelanggan" v-model="namaPelanggan" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="kategori" class="form-label">Kategori:</label>
+        <select class="form-select" id="kategori" v-model="kategori" required>
+          <option disabled value="">Pilih kategori</option>
+          <option value="sosial">Sosial</option>
+          <option value="rumah">Rumah</option>
+          <option value="bisnis">Bisnis</option>
+          <option value="industri">Industri</option>
+          <option value="pemerintah">Pemerintah</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="tarif" class="form-label">Tarif per KWH:</label>
+        <input type="text" class="form-control" id="tarif" :value="getTarif" readonly>
+      </div>
+
+      <div class="mb-3">
+        <label for="pemakaian" class="form-label">Pemakaian Listrik (KWH):</label>
+        <input type="number" class="form-control" id="pemakaian" v-model="pemakaianKWH" required>
+      </div>
+
+      <button type="submit" class="btn btn-success">Hitung</button>
+      <button type="button" class="btn btn-danger" @click="resetForm">Reset</button>
+    </form>
+
+    <hr>
+
+    <h2 class="mt-4 mb-4">Hasil Perhitungan</h2>
+    <table class="table table-striped table-light-gray">
+      <thead>
+        <tr>
+          <th>Nama Pelanggan</th>
+          <th>Pemakaian KWH</th>
+          <th>Tagihan</th>
+          <th>Abonemen</th>
+          <th>Pajak</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(item, index) in hasilPerhitungan" :key="index">
+          <td>{{ item.namaPelanggan }}</td>
+          <td>{{ item.pemakaianKWH }}</td>
+          <td>{{ item.tagihan }}</td>
+          <td>{{ item.abonemen }}</td>
+          <td>{{ item.pajak }}</td>
+          <td>{{ item.total }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <footer class="mt-4 mb-4 footer">
+        <p>&copy; 222101064 - Mila Oktapiani</p>
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/vue@next"></script>
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          namaPelanggan: '',
+          kategori: '',
+          pemakaianKWH: null,
+          hasilPerhitungan: [],
+          kategoriData: {
+            sosial: { abonemen: 10000, tarif: 275, pajak: 0 },
+            rumah: { abonemen: 30000, tarif: 1350, pajak: 10 },
+            bisnis: { abonemen: 100000, tarif: 1444, pajak: 11 },
+            industri: { abonemen: 100000, tarif: 1112, pajak: 11 },
+            pemerintah: { abonemen: 25000, tarif: 1075, pajak: 10 }
+          }
+        };
+      },
+      computed: {
+        getTarif() {
+          return this.kategoriData[this.kategori] ? this.kategoriData[this.kategori].tarif : '';
+        }
+      },
+      methods: {
+        calculateBill() {
+          const kategoriInfo = this.kategoriData[this.kategori];
+          const tagihan = this.pemakaianKWH * kategoriInfo.tarif;
+          const abonemen = kategoriInfo.abonemen;
+          const pajak = (tagihan + abonemen) * (kategoriInfo.pajak / 100);
+          const total = tagihan + abonemen + pajak;
+
+          const hasil = {
+            namaPelanggan: this.namaPelanggan,
+            pemakaianKWH: this.pemakaianKWH,
+            tagihan: tagihan,
+            abonemen: abonemen,
+            pajak: pajak,
+            total: total
+          };
+
+          this.hasilPerhitungan.push(hasil);
+
+          this.resetForm();
+        },
+        resetForm() {
+          this.namaPelanggan = '';
+          this.kategori = '';
+          this.pemakaianKWH = null;
+        }
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>pembayaran listrik</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+      #app {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        text-align: center;
+        margin-top: 0;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 20px;
+      }
+      label {
+        font-weight: bold;
+      }
+      input[type="text"],
+      input[type="number"],
+      select {
+        margin-bottom: 10px;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .button-container {
+        text-align: center;
+      }
+
+      .button-container button {
+        padding: 10px 50px;
+        margin-right: 10px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+      }
+      .button-container button:hover {
+        background-color: #45a049;
+      }
+      .button-container button[type="reset"] {
+        background-color: #f44336;
+      }
+      .button-container button[type="reset"]:hover {
+        background-color: #da190b;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+
+      .button-group button {
+        flex-basis: 48%;
+      }
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 5px;
+        color: white;
+        background-color: #2a2929;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h2>Pembayaran Listrik</h2>
+      <form @submit.prevent="hitungKredit">
+        <label for="pelanggan">Nama Pelanggan :</label>
+        <input type="text" id="pelanggan" v-model.number="pelanggan" required />
+
+        <label for="kategori">Kategori :</label>
+        <select id="kategori" v-model="kategori" required>
+          <option value="">-- Pilih kategori --</option>
+          <option
+            v-for="tp in pilihan"
+            :value="tp.tipe"
+            :value="abonemen=tp.abonemen"
+            :value="tarif=tp.tarif"
+            :value="tarif=tp.pajak"
+          >
+            {{ tp.tipe }}
+          </option>
+        </select>
+
+        <label for="pemakaian">Pemakaian Listrik (KWH) :</label>
+        <input
+          type="number"
+          id="pemakaian"
+          v-model.number="pemakaian"
+          required
+        />
+
+        <label for="tarif">Tarif per KWH :</label>
+        <input type="number" id="tarif" v-model.number="tarif" readonly />
+
+        <div class="button-container">
+          <button type="submit">Hitung</button>
+          <button type="reset" @click="resetForm">Reset</button>
+        </div>
+
+        <div v-if="showResults">
+          <h3>Hasil Perhitungan :</h3>
+          <p v-if="tagihan">Tagihan : {{ formatRibuan(tagihan) }}</p>
+          <p v-if="abonemen">Abonemen : {{ formatRibuan(abonemen) }}</p>
+          <p v-if="pajak">Pajak : {{ formatRibuan(pajak) }}</p>
+          <p v-if="total">Total : {{ formatRibuan(total) }}</p>
+        </div>
+
+        <table v-if="DaftarPembayaran.length > 0">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Pemakaian (KWH)</th>
+              <th>Tagihan</th>
+              <th>Abonemen</th>
+              <th>Pajak</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-for="item in DaftarPembayaran" :key="item.kategori">
+              <td>{{ item.pelanggan }}</td>
+              <td>{{ formatRibuan(item.pemakaian) }}</td>
+              <td>{{ formatRibuan(item.tagihan) }}</td>
+              <td>{{ formatRibuan(item.abonemen) }}</td>
+              <td>{{ formatRibuan(item.pajak) }}</td>
+              <td>{{ formatRibuan(item.total) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </form>
+    </div>
+
+    <br /><br /><br />
+    <footer>
+      <p>&copy; 222101085 - Muhamad Aldi Nur hidayat putra</p>
+    </footer>
+    <script src="vue.global.js"></script>
+    <script>
+      const app = Vue.createApp({
+        data() {
+          return {
+            pilihan: [
+              { tipe: "Sosial", abonemen: 10000, tarif: 275, pajak: 0 },
+              { tipe: "Rumah", abonemen: 30000, tarif: 1350, pajak: 10 },
+              { tipe: "Bisnis", abonemen: 100000, tarif: 1444, pajak: 11 },
+              { tipe: "Industri", abonemen: 100000, tarif: 1112, pajak: 11 },
+              { tipe: "Pemerintah", abonemen: 25000, tarif: 1075, pajak: 10 },
+            ],
+            pelanggan: "",
+            kategori: "",
+            abonemen: 0,
+            pemakaian: 0,
+            tarif: 0,
+            pajak: 0,
+            DaftarPembayaran: [],
+            showResults: false,
+          };
+        },
+        methods: {
+          hitungKredit() {
+            if (this.kategori && this.pemakaian && this.pelanggan) {
+              const opsi = this.pilihan.find((tp) => tp.tipe === this.kategori);
+              if (opsi) {
+                this.pajak = opsi.pajak;
+                this.abonemen = opsi.abonemen;
+                this.tarif = opsi.tarif;
+                this.pemakaian = this.pemakaian;
+                this.tagihan = this.pemakaian * this.tarif;
+                this.total = this.tagihan + this.abonemen + this.pajak / 100;
+                this.DaftarPembayaran.push({
+                  pelanggan: this.pelanggan,
+                  pemakaian: this.pemakaian,
+                  tagihan: this.tagihan,
+                  abonemen: this.abonemen,
+                  pajak: this.pajak,
+                  total: this.total,
+                });
+                this.showResults = true;
+              }
+            }
+          },
+
+          formatRibuan(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+          },
+          resetForm() {
+            this.pelanggan = "";
+            this.kategori = "";
+            this.pemakaian = 0;
+            this.tarif = 0;
+            this.showResults = false;
+          },
+        },
+      });
+      app.mount("#app");
+    </script>
+  </body>
+</html>
